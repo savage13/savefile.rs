@@ -1,5 +1,5 @@
+use botw_editor::{get_hash, SaveData};
 use clap::Parser;
-use savefile::{get_hash, SaveData};
 use serde_json::Value;
 
 use wildmatch::WildMatch;
@@ -10,21 +10,27 @@ use hash::KEYS;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
+    /// game_data.sav input file
     #[arg(short, long)]
     input: String,
 
+    /// name to read, accepts wildcards * and ?
     #[arg(short, long)]
     value: Vec<String>,
 
+    /// set name=value
     #[arg(short, long)]
     set: Vec<String>,
 
+    /// output file
     #[arg(short, long)]
     output: Option<String>,
 
+    /// overwrite the input file
     #[arg(short, long)]
     writeover: bool,
 
+    /// show all values (name, value, hash(name))
     #[arg(short, long)]
     all: bool,
 }
@@ -40,7 +46,7 @@ fn main() {
         let values: Vec<_> = KEYS.iter().filter(|key| re.matches(key)).collect();
         for value in values {
             match s.get(&value) {
-                Ok(v) => println!("{value}: {}", v),
+                Ok(v) => println!("{value} {}", v),
                 Err(err) => println!("{}", err),
             }
         }
@@ -64,12 +70,12 @@ fn main() {
         let value = vals[1];
         let svalue: Value = serde_json::from_str(value).unwrap();
         match s.get(key) {
-            Ok(v) => println!("{key}: {:?} pre", v),
+            Ok(v) => println!("{key} {:?} pre", v),
             Err(err) => println!("{}", err),
         }
         let _out = s.set(key, svalue.clone());
         match s.get(key) {
-            Ok(v) => println!("{key}: {:?} post", v),
+            Ok(v) => println!("{key} {:?} post", v),
             Err(_err) => {}
         }
     }

@@ -1,5 +1,5 @@
 [package]
-name = "savefile"
+name = "botw-editor"
 version = "0.1.0"
 edition = "2021"
 description = "BotW Save Editor"
@@ -8,7 +8,6 @@ license = "BSD 2-Clause"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
 
 [[bin]]
 name = "botw-editor"
