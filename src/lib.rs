@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::io::BufReader;
+
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -30,21 +32,22 @@ macro_rules! from_json {
 mod types;
 use types::*;
 
-#[wasm_bindgen]
+#[cfg(target_arch = "wasm32")]
+#[cfg_attr(feature = "wasm", wasm_bindgen)]
 extern "C" {
     // Use `js_namespace` here to bind `console.log(..)` instead of just
     // `log(..)`
-    #[wasm_bindgen(js_namespace = console)]
+    #[cfg_attr(feature = "wasm", wasm_bindgen(js_namespace = console))]
     fn log(s: &str);
 
     // The `console.log` is quite polymorphic, so we can bind it with multiple
     // signatures. Note that we need to use `js_name` to ensure we always call
     // `log` in JS.
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    #[cfg_attr(feature = "wasm", wasm_bindgen(js_namespace = console, js_name = log))]
     fn log_u32(a: u32);
 
     // Multiple arguments too!
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    #[cfg_attr(feature = "wasm", wasm_bindgen(js_namespace = console, js_name = log))]
     fn log_many(a: &str, b: &str);
 }
 #[cfg(target_arch = "wasm32")]
@@ -55,7 +58,7 @@ macro_rules! console_log {
 }
 
 #[derive(Debug)]
-#[wasm_bindgen]
+#[cfg_attr(feature = "wasm", wasm_bindgen)]
 pub struct SaveData {
     version: u32,
     marker: u32,
@@ -687,17 +690,61 @@ mod tests {
     #[test]
     fn it_works() {
         let s = SaveData::read("t/3AA Blights Segment Start v2/0/game_data.sav").unwrap();
-        read_gamedata();
+        //read_gamedata();
         assert_eq!(get_hash("MainField_Item_Fruit_A_1641432141"), 195588);
         assert_eq!(get_hash("GodTree_Finish"), 408334);
 
-        assert_eq!(s.get("MainField_Enemy_Lizalfos_Junior_1163152111"), 0);
         assert_eq!(
-            s.get("MainField_DgnObj_DungeonEntranceSP_Far_1792025272"),
-            0
+            s.get("MainField_Enemy_Lizalfos_Junior_1163152111")
+                .unwrap()
+                .as_bool()
+                .unwrap(),
+            false
         );
-        assert_eq!(s.get("PorchShield_FlagSp"), vec![0; 20]);
-        assert_eq!(s.get("PorchShield_ValueSp"), [0; 20]);
-        assert_eq!(s.get("CookEffect0"), 0);
+        assert_eq!(
+            s.get("MainField_DgnObj_DungeonEntranceSP_Far_1792025272")
+                .unwrap()
+                .as_bool()
+                .unwrap(),
+            false
+        );
+        let tmp = s.get("PorchShield_FlagSp").unwrap();
+        let v = tmp.as_array().unwrap();
+        for k in v.iter() {
+            assert_eq!(k, 0)
+        }
+        let tmp = s.get("PorchShield_ValueSp").unwrap();
+        let v = tmp.as_array().unwrap();
+        let value = [
+            [10., 3.],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+            [-1.0, 0.0],
+        ];
+        for i in 0..20 {
+            assert_eq!(v[i].as_i64().unwrap(), 0);
+        }
+        let tmp = s.get("CookEffect0").unwrap();
+        let v = tmp.as_array().unwrap();
+        for i in 0..20 {
+            assert_eq!(v[i].as_array().unwrap()[0].as_f64().unwrap(), value[i][0]);
+            assert_eq!(v[i].as_array().unwrap()[1].as_f64().unwrap(), value[i][1]);
+        }
     }
 }
