@@ -2,7 +2,28 @@
 name = "savefile"
 version = "0.1.0"
 edition = "2021"
+description = "BotW Save Editor"
+repository = "None"
+license = "BSD 2-Clause"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+
+[[bin]]
+name = "botw-editor"
+path = "src/bin.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.5.4", features = ["derive"] }
+phf = { version = "0.11.2", features = ["macros"] }
+crc = "3.2.1"
+wildmatch = "2.4.0"
+serde_json = "1.0.117"
+serde-wasm-bindgen = { version = "0.6.5", optional = true }
+wasm-bindgen = { version = "0.2.92", optional = true }
+
+[features]
+wasm = ["dep:wasm-bindgen", "dep:serde-wasm-bindgen"]
