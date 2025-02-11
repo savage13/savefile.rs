@@ -25,4 +25,5 @@ serde-wasm-bindgen = { version = "0.6.5", optional = true }
 wasm-bindgen = { version = "0.2.92", optional = true }
 
 [features]
+default = []
 wasm = ["dep:wasm-bindgen", "dep:serde-wasm-bindgen"]
