@@ -1,0 +1,60 @@
+name: Release
+env:
+  CRATE_NAME: ubi
+  GITHUB_TOKEN: ${{ github.token }}
+  RUST_BACKTRACE: 1
+on:
+  push:
+    tags:
+      - "v*.*.*"
+jobs:
+  test-matrix:
+    name: ${{ matrix.platform.os-name }} with rust ${{ matrix.toolchain }}
+    runs-on: ${{ matrix.platform.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os-name: macOS-x86_64
+            runs-on: macOS-latest
+            target: x86_64-apple-darwin
+        toolchain:
+          - stable
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set "--features" flag value
+        id: set-features-flag-value
+        shell: bash
+        run: |
+          if [ -n "${{ matrix.platform.features }}" ]; then
+              echo "features=${{ matrix.platform.features }}" >> "$GITHUB_OUTPUT"
+          else 
+              echo "features=default" >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: "build"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args:
+            "--locked --release --features ${{ steps.set-features-flag-value.outputs.features }}"
+          strip: true
+      - name: Run tests
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: "test"
+          target: ${{ matrix.platform.target }}
+          toolchain: ${{ matrix.toolchain }}
+          args:
+            "--locked --release  --features ${{ steps.set-features-flag-value.outputs.features }}"
+        if: ${{ !matrix.platform.skip-tests }}
+      - name: Publish artifacts and release
+        uses: houseabsolute/actions-rust-release@v0
+        with:
+          executable-name: botw-editor
+          target: ${{ matrix.platform.target }}
+        if: matrix.toolchain == 'stable' && matrix.platform.features == ''
+            
