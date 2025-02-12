@@ -1,7 +1,7 @@
 name: Release
 env:
   CRATE_NAME: ubi
-  GITHUB_TOKEN: ${{ github.token }}
+  GITHUB_TOKEN: ${{ github.TOKEN }}
   RUST_BACKTRACE: 1
 on:
   push:
