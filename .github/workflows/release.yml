@@ -1,6 +1,6 @@
 name: Release
 env:
-  CRATE_NAME: ubi
+  CRATE_NAME: savefile.rs
   GITHUB_TOKEN: ${{ github.TOKEN }}
   RUST_BACKTRACE: 1
 on:
@@ -18,9 +18,24 @@ jobs:
           - os-name: macOS-x86_64
             runs-on: macOS-latest
             target: x86_64-apple-darwin
+          - os-name: macOS-aarch64
+            runs-on: macOS-latest
+            target: aarch64-apple-darwin
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-22.04
+            target: x86_64-unknown-linux-musl
+          - os-name: Linux-i686
+            runs-on: ubuntu-22.04
+            target: i686-unknown-linux-musl
+          - os-name: Windows-i686
+            runs-on: windows-latest
+            target: i686-pc-windows-msvc
+            skip-tests: true
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc            
         toolchain:
           - stable
-
     steps:
       - uses: actions/checkout@v4
       - name: Set "--features" flag value
