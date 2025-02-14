@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -88,6 +89,30 @@ enum Kind {
     Unknown = 16,
 }
 
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Kind::Bool => "bool",
+            Kind::BoolArray => "boolarray",
+            Kind::F32 => "f32",
+            Kind::F32Array => "f32_array",
+            Kind::S32 => "s32",
+            Kind::S32Array => "s32_array",
+            Kind::Str => "string",
+            Kind::Str256 => "string256",
+            Kind::Str256Array => "string256_array",
+            Kind::Str64 => "string64",
+            Kind::Str64Array => "string64_array",
+            Kind::Vec2f => "vector2f",
+            Kind::Vec2fArray => "vector2f_array",
+            Kind::Vec3f => "vector3f",
+            Kind::Vec3fArray => "vector3f_array",
+            Kind::Vec4f => "vector4f",
+            Kind::Unknown => "unknown",
+        };
+        write!(f, "{s}")
+    }
+}
 impl From<&str> for Kind {
     fn from(s: &str) -> Kind {
         match s {
@@ -301,6 +326,12 @@ impl SaveData {
     pub fn get(&self, key: &str) -> Result<Value, String> {
         let hash: u32 = get_hash(key);
         self.get_by_hash(hash)
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn get_kind(&self, key: &str) -> Result<String, String> {
+        let hash: u32 = get_hash(key);
+        let kind = Kind::from(*TYPES.get(&hash).unwrap_or(&"bool"));
+        Ok(format!("{kind}"))
     }
     #[cfg(not(target_arch = "wasm32"))]
     pub fn get_by_hash(&self, hash: u32) -> Result<Value, String> {

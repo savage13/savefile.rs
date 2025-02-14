@@ -1,6 +1,7 @@
-use botw_editor::{get_hash, SaveData};
+use botw_editor::SaveData;
 use clap::Parser;
-use serde_json::Value;
+use serde_json::{json, Value};
+use std::fmt;
 
 use wildmatch::WildMatch;
 
@@ -35,6 +36,71 @@ struct Args {
     all: bool,
 }
 
+#[derive(Copy, Clone, Debug)]
+enum Weather {
+    Sun = 0,
+    Cloudy = 1,
+    Rain = 2,
+    HeavyRain = 3,
+    Snow = 4,
+    HeavySnow = 5,
+    ThunderStorm = 6,
+    ThunderRain = 7,
+    BlueSkyRain = 8,
+}
+impl From<u64> for Weather {
+    fn from(value: u64) -> Weather {
+        match value {
+            0 => Weather::Sun,
+            1 => Weather::Cloudy,
+            2 => Weather::Rain,
+            3 => Weather::HeavyRain,
+            4 => Weather::Snow,
+            5 => Weather::HeavySnow,
+            6 => Weather::ThunderStorm,
+            7 => Weather::ThunderRain,
+            8 => Weather::BlueSkyRain,
+            _ => panic!("unknown weather value"),
+        }
+    }
+}
+
+impl fmt::Display for Weather {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Weather::Sun => "sun",
+            Weather::Cloudy => "cloudy",
+            Weather::Rain => "rain",
+            Weather::HeavyRain => "heavy_rain",
+            Weather::Snow => "snow",
+            Weather::HeavySnow => "heavy_snow",
+            Weather::ThunderStorm => "thunder_storm",
+            Weather::ThunderRain => "thunder_rain",
+            Weather::BlueSkyRain => "blue_sky_rain",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+fn converter(name: &str, value: Value) -> Value {
+    if name.starts_with("climateWeather") {
+        let mut out = vec![];
+        println!("{value}");
+        for r in value.as_array().unwrap() {
+            let mut tmp = vec![];
+            let k = r.as_u64().unwrap();
+            for i in 0..6 {
+                let w: Weather = (k >> (i * 4) & 0xF).into();
+                let s = format!("{w}");
+                tmp.push(s);
+            }
+            out.push(tmp);
+        }
+        return json!(out);
+    }
+    value
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -46,7 +112,7 @@ fn main() {
         let values: Vec<_> = KEYS.iter().filter(|key| re.matches(key)).collect();
         for value in values {
             match s.get(&value) {
-                Ok(v) => println!("{value} {}", v),
+                Ok(v) => println!("{value} {}", converter(value, v)),
                 Err(err) => println!("{}", err),
             }
         }
@@ -55,8 +121,13 @@ fn main() {
     if args.all {
         for name in KEYS.iter() {
             match s.get(&name) {
-                Ok(value) => println!("{:60} {} {}", name, value, get_hash(name)),
-                Err(err) => println!("{}", err),
+                Ok(value) => println!(
+                    "{:60} {} {}",
+                    name,
+                    converter(name, value),
+                    s.get_kind(name).unwrap()
+                ),
+                Err(err) => println!("{} {}", err, name),
             }
         }
     }
